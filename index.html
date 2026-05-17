@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>民宿會員資料登記</title>
-    
-    <script src="https://static.liff.line.me/js/v2/sdk.js"></script>
-    
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; }
         .form-container { max-width: 400px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
@@ -24,7 +21,7 @@
 
 <div class="form-container">
     <h2>民宿會員資料登記</h2>
-    <div id="loading" class="loading">正在載入 LINE 使用者資訊...</div>
+    <div id="loading" class="loading">正在安全載入 LINE 模組與使用者資訊...</div>
     
     <form id="infoForm" style="display: none;" onsubmit="submitForm(event)">
         <input type="hidden" id="userId" name="userId">
@@ -59,7 +56,7 @@
                 <option value="臺東縣">臺東縣</option>
                 <option value="澎湖縣">澎湖縣</option>
                 <option value="金門縣">金門縣</option>
-                <option value="連江縣">連江县</option>
+                <option value="連江縣">連江縣</option>
             </select>
         </div>
 
@@ -78,15 +75,30 @@
 </div>
 
 <script>
-    // 初始化 LIFF 函式
-    async function initLIFF() {
-        // 2. 防呆機制：檢查 window.liff 是否存在
-        if (typeof liff === 'undefined') {
-            alert('錯誤：LINE SDK 未能成功載入，請確認網路連線或嘗試重新開啟 LINE。');
-            return;
-        }
+    // 🌟 核心改動：改用 JavaScript 動態暴力注入 SDK，繞過所有瀏覽器緩存與阻擋政策
+    function loadLiffSDK() {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://static.liff.line.me/js/v2/sdk.js?v=' + new Date().getTime(); // 加上時間戳，強迫不讀舊快取
+            script.async = true;
+            script.onload = () => {
+                if (typeof liff !== 'undefined') {
+                    resolve();
+                } else {
+                    reject(new Error('SDK loaded but window.liff is undefined'));
+                }
+            };
+            script.onerror = () => reject(new Error('Failed to load SDK script'));
+            document.head.appendChild(script);
+        });
+    }
 
+    // 初始化 LIFF 邏輯
+    async function initLIFF() {
         try {
+            // 先強制載入 SDK 成功後，才往下走
+            await loadLiffSDK();
+
             await liff.init({ liffId: '2009896064-IACIgobo' }); 
             if (!liff.isLoggedIn()) {
                 liff.login();
@@ -99,7 +111,7 @@
             }
         } catch (error) {
             console.error('LIFF 初始化失敗', error);
-            alert('LIFF 初始化失敗原因：' + error.code + ' - ' + error.message + '\n完整資訊: ' + JSON.stringify(error));
+            alert('LIFF 啟動異常原因：' + error.message + '\n您可以嘗試徹底關閉 LINE App 再重新點入。');
         }
     }
 
@@ -118,7 +130,7 @@
             return;
         }
 
-        // ⚠️ 請務必改為你最新部署成功、結尾是 /exec 的 GAS 網址！
+        // ⚠️ 請務必改為你 GAS 部署成功、結尾是 /exec 的網址！
         const gasWebhookUrl = 'https://script.google.com/macros/s/AKfycbwaLCp-ReThfboahNVg3qttJ2ptxyLBAxAE-6Kgchgyrll_apr_EnoSn4X88-rb2S4k6A/exec'; 
 
         try {
@@ -145,8 +157,8 @@
         }
     }
 
-    // 3. 確保網頁所有元件（包括外部 SDK 腳本）完全下載完畢才執行初始化
-    window.addEventListener('load', initLIFF);
+    // 當網頁載入時啟動
+    window.onload = initLIFF;
 </script>
 
 </body>
