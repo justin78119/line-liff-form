@@ -3,163 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>民宿會員資料登記</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; }
-        .form-container { max-width: 400px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #2c3e50; margin-bottom: 25px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; }
-        input[type="text"], input[type="tel"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
-        input:required, select:required { border-left: 4px solid #e74c3c; }
-        button { width: 100%; padding: 12px; background-color: #2ecc71; border: none; border-radius: 4px; color: white; font-size: 16px; cursor: pointer; font-weight: bold; }
-        button:hover { background-color: #27ae60; }
-        .loading { text-align: center; color: #7f8c8d; font-style: italic; }
-    </style>
+    <title>民宿會員登記表單</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
-<body>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
 
-<div class="form-container">
-    <h2>民宿會員資料登記</h2>
-    <div id="loading" class="loading">正在安全載入 LINE 模組與使用者資訊...</div>
-    
-    <form id="infoForm" style="display: none;" onsubmit="submitForm(event)">
-        <input type="hidden" id="userId" name="userId">
-
-        <div class="form-group">
-            <label for="hotelName">民宿名稱 <span style="color:red;">*</span></label>
-            <input type="text" id="hotelName" name="hotelName" placeholder="請輸入您的民宿全名" required>
-        </div>
-
-        <div class="form-group">
-            <label for="city">所在城市 <span style="color:red;">*</span></label>
-            <select id="city" name="city" required>
-                <option value="" disabled selected>-- 請選擇縣市 --</option>
-                <option value="基隆市">基隆市</option>
-                <option value="臺北市">臺北市</option>
-                <option value="新北市">新北市</option>
-                <option value="桃園市">桃園市</option>
-                <option value="新竹市">新竹市</option>
-                <option value="新竹縣">新竹縣</option>
-                <option value="苗栗縣">苗栗縣</option>
-                <option value="臺中市">臺中市</option>
-                <option value="彰化縣">彰化縣</option>
-                <option value="南投縣">南投縣</option>
-                <option value="雲林縣">雲林縣</option>
-                <option value="嘉義市">嘉義市</option>
-                <option value="嘉義縣">嘉義縣</option>
-                <option value="臺南市">臺南市</option>
-                <option value="高雄市">高雄市</option>
-                <option value="屏東縣">屏東縣</option>
-                <option value="宜蘭縣">宜蘭縣</option>
-                <option value="花蓮縣">花蓮縣</option>
-                <option value="臺東縣">臺東縣</option>
-                <option value="澎湖縣">澎湖縣</option>
-                <option value="金門縣">金門縣</option>
-                <option value="連江縣">連江縣</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="contactName">聯繫人姓名 <span style="color:red;">*</span></label>
-            <input type="text" id="contactName" name="contactName" placeholder="請輸入聯絡人姓名" required>
-        </div>
-
-        <div class="form-group">
-            <label for="contactPhone">聯繫電話號碼 <span style="color:red;">*</span></label>
-            <input type="tel" id="contactPhone" name="contactPhone" placeholder="例如：0912345678" pattern="[0-9]{9,10}" title="請輸入正確的電話號碼數字" required>
-        </div>
-
-        <button type="submit">確認提交</button>
-    </form>
-</div>
-
-<script>
-    // 🌟 核心改動：改用 JavaScript 動態暴力注入 SDK，繞過所有瀏覽器緩存與阻擋政策
-    function loadLiffSDK() {
-        return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'https://static.liff.line.me/js/v2/sdk.js?v=' + new Date().getTime(); // 加上時間戳，強迫不讀舊快取
-            script.async = true;
-            script.onload = () => {
-                if (typeof liff !== 'undefined') {
-                    resolve();
-                } else {
-                    reject(new Error('SDK loaded but window.liff is undefined'));
-                }
-            };
-            script.onerror = () => reject(new Error('Failed to load SDK script'));
-            document.head.appendChild(script);
-        });
-    }
-
-    // 初始化 LIFF 邏輯
-    async function initLIFF() {
-        try {
-            // 先強制載入 SDK 成功後，才往下走
-            await loadLiffSDK();
-
-            await liff.init({ liffId: '2009896064-IACIgobo' }); 
-            if (!liff.isLoggedIn()) {
-                liff.login();
-            } else {
-                const profile = await liff.getProfile();
-                document.getElementById('userId').value = profile.userId; 
-                
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('infoForm').style.display = 'block';
-            }
-        } catch (error) {
-            console.error('LIFF 初始化失敗', error);
-            alert('LIFF 啟動異常原因：' + error.message + '\n您可以嘗試徹底關閉 LINE App 再重新點入。');
-        }
-    }
-
-    // 表單提交事件
-    async function submitForm(event) {
-        event.preventDefault(); 
+    <div class="bg-white p-8 rounded-2xl shadow-md w-full max-w-md">
+        <h2 class="text-2xl font-bold text-slate-800 text-center mb-6">民宿會員登記</h2>
         
-        const userId = document.getElementById('userId').value;
-        const hotelName = document.getElementById('hotelName').value;
-        const city = document.getElementById('city').value;
-        const contactName = document.getElementById('contactName').value;
-        const contactPhone = document.getElementById('contactPhone').value;
+        <div id="loading" class="text-center py-8 text-slate-500">
+            <p class="animate-pulse">正在載入 LINE 安全模組...</p>
+        </div>
 
-        if (!userId) {
-            alert('未能成功取得 LINE 身分驗證，無法提交！');
-            return;
+        <form id="liffForm" class="hidden space-y-4">
+            <input type="hidden" id="userId" name="userId">
+            <input type="hidden" id="displayName" name="displayName">
+
+            <div>
+                <label class="block text-sm font-medium text-slate-600 mb-1">LINE 帳號</label>
+                <div id="userProfileName" class="w-full px-4 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 font-medium">
+                    載入中...
+                </div>
+            </div>
+
+            <div>
+                <label for="hotelName" class="block text-sm font-medium text-slate-700 mb-1">民宿名稱 <span class="text-red-500">*</span></label>
+                <input type="text" id="hotelName" name="hotelName" required
+                    class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" 
+                    placeholder="請輸入您的民宿名稱">
+            </div>
+
+            <div>
+                <label for="contactName" class="block text-sm font-medium text-slate-700 mb-1">聯繫人姓名 <span class="text-red-500">*</span></label>
+                <input type="text" id="contactName" name="contactName" required
+                    class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" 
+                    placeholder="請輸入聯繫人姓名">
+            </div>
+
+            <div>
+                <label for="contactPhone" class="block text-sm font-medium text-slate-700 mb-1">聯繫電話號碼 <span class="text-red-500">*</span></label>
+                <input type="tel" id="contactPhone" name="contactPhone" required
+                    class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" 
+                    placeholder="例如：0912345678">
+            </div>
+
+            <div>
+                <label for="city" class="block text-sm font-medium text-slate-700 mb-1">所在城市 <span class="text-red-500">*</span></label>
+                <select id="city" name="city" required
+                    class="w-full px-4 py-2 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    <option value="" disabled selected>請選擇所在縣市</option>
+                    <option value="基隆市">基隆市</option>
+                    <option value="台北市">台北市</option>
+                    <option value="新北市">新北市</option>
+                    <option value="桃園市">桃園市</option>
+                    <option value="新竹市">新竹市</option>
+                    <option value="新竹縣">新竹縣</option>
+                    <option value="苗栗縣">苗栗縣</option>
+                    <option value="台中市">台中市</option>
+                    <option value="彰化縣">彰化縣</option>
+                    <option value="南投縣">南投縣</option>
+                    <option value="雲林縣">雲林縣</option>
+                    <option value="嘉義市">嘉義市</option>
+                    <option value="嘉義縣">嘉義縣</option>
+                    <option value="台南市">台南市</option>
+                    <option value="高雄市">高雄市</option>
+                    <option value="屏東縣">屏東縣</option>
+                    <option value="宜蘭縣">宜蘭縣</option>
+                    <option value="花蓮縣">花蓮縣</option>
+                    <option value="台東縣">台東縣</option>
+                    <option value="澎湖縣">澎湖縣</option>
+                    <option value="金門縣">金門縣</option>
+                    <option value="連江縣">連江縣</option>
+                </select>
+            </div>
+
+            <button type="submit" id="submitBtn"
+                class="w-full py-3 bg-emerald-500 text-white font-semibold rounded-lg hover:bg-emerald-600 transition duration-200 shadow-md">
+                確認送出
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // 🚨 填入你的 LINE LIFF ID
+        const MY_LIFF_ID = '2009896064-IACIgobo'; 
+        
+        // 🚨 填入步驟一複製的 GAS Web App URL
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwaLCp-ReThfboahNVg3qttJ2ptxyLBAxAE-6Kgchgyrll_apr_EnoSn4X88-rb2S4k6A/exec'; 
+
+        async function initializeLiff() {
+            try {
+                await liff.init({ liffId: MY_LIFF_ID });
+                if (liff.isLoggedIn()) {
+                    const profile = await liff.getProfile();
+                    document.getElementById('userId').value = profile.userId;
+                    document.getElementById('displayName').value = profile.displayName;
+                    document.getElementById('userProfileName').innerText = profile.displayName;
+                    
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('liffForm').classList.remove('hidden');
+                } else {
+                    liff.login();
+                }
+            } catch (error) {
+                console.error('LIFF 初始化失敗：', error);
+                document.getElementById('loading').innerHTML = `<p class="text-red-500 font-bold">安全模組載入失敗，請從 LINE 重新開啟</p>`;
+            }
         }
 
-        // ⚠️ 請務必改為你 GAS 部署成功、結尾是 /exec 的網址！
-        const gasWebhookUrl = 'https://script.google.com/macros/s/AKfycbwaLCp-ReThfboahNVg3qttJ2ptxyLBAxAE-6Kgchgyrll_apr_EnoSn4X88-rb2S4k6A/exec'; 
+        document.getElementById('liffForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = '正在送出資料...';
 
-        try {
-            const response = await fetch(gasWebhookUrl, {
-                method: 'POST',
-                mode: 'no-cors', 
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    userId: userId,
-                    hotelName: hotelName,
-                    city: city,
-                    contactName: contactName,
-                    contactPhone: contactPhone
-                })
-            });
+            const formData = {
+                userId: document.getElementById('userId').value,
+                displayName: document.getElementById('displayName').value,
+                hotelName: document.getElementById('hotelName').value,
+                contactName: document.getElementById('contactName').value,
+                contactPhone: document.getElementById('contactPhone').value,
+                city: document.getElementById('city').value
+            };
 
-            alert('資料提交成功！感謝您的登記。');
-            liff.closeWindow(); 
-        } catch (error) {
-            console.error('提交錯誤', error);
-            alert('提交失敗，請檢查網路連線後再試一次。');
-        }
-    }
+            try {
+                await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
 
-    // 當網頁載入時啟動
-    window.onload = initLIFF;
-</script>
+                alert('登記成功！感謝您的填寫。');
+                liff.closeWindow();
+            } catch (error) {
+                console.error('送出失敗：', error);
+                alert('系統忙碌中，請稍後再試！');
+                submitBtn.disabled = false;
+                submitBtn.innerText = '確認送出';
+            }
+        });
 
+        window.onload = initializeLiff;
+    </script>
 </body>
 </html>
